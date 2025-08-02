@@ -1,148 +1,186 @@
-# Git & SSH Key Setup on Arch Linux
+# Git & GitHub Setup on Arch Linux
 
-This guide explains how to install `git`, configure your Git identity, and generate an SSH key for GitHub on Arch Linux using the username and email **`hypergolang`**.
+This guide explains how to install `git`, configure your Git identity, and set up GitHub authentication on Arch Linux using the username and email **`hypergolang`**.
+
+There are **two methods** to authenticate with GitHub: **SSH Keys** (traditional) and **GitHub CLI** (modern, easier for VS Code integration).
 
 ---
 
-## 1. Install Git and OpenSSH
+## Method 1: SSH Key Setup (Traditional)
 
-First, ensure that `git` and `openssh` are installed on your Arch Linux system.
-
+### 1. Install Git and OpenSSH
 ```bash
 sudo pacman -Syu git openssh
-````
-
----
-
-## 2. Configure Git
-
-Set your Git username and email (replace with your own if needed):
-
-```bash
-git config --global user.name "hypergolang"
-git config --global user.email "hypergolang"
 ```
 
-Check if the configuration is correct:
+### 2. Configure Git
+Set your Git username and email:
+```bash
+git config --global user.name "hypergolang"
+git config --global user.email "hypergolang@gmail.com"
+```
 
+Check configuration:
 ```bash
 git config --list
 ```
 
----
-
-## 3. Generate an SSH Key
-
-Create a new **ed25519** SSH key (recommended for GitHub):
-
+### 3. Generate SSH Key
+Create a new **ed25519** SSH key:
 ```bash
 ssh-keygen -t ed25519 -C "hypergolang"
 ```
 
 **When prompted:**
+* *Enter file location*: Press **Enter** for default (`~/.ssh/id_ed25519`)
+* *Enter passphrase*: Press **Enter** for no password, or set one for security
 
-* `Enter a file in which to save the key`: Press **Enter** to use the default location (`~/.ssh/id_ed25519`).
-* `Enter passphrase`: You can leave it empty by pressing **Enter** or set a password for extra security.
-
----
-
-## 4. Start SSH Agent and Add Your Key
-
-Start the SSH agent:
-
+### 4. Start SSH Agent and Add Key
 ```bash
 eval "$(ssh-agent -s)"
-```
-
-Add your private key:
-
-```bash
 ssh-add ~/.ssh/id_ed25519
 ```
 
----
-
-## 5. Copy Your Public Key
-
-Print your public key:
-
+### 5. Copy Public Key
 ```bash
 cat ~/.ssh/id_ed25519.pub
 ```
-
 Copy the entire output starting with `ssh-ed25519`.
 
----
+### 6. Add SSH Key to GitHub
+1. Go to [GitHub SSH Keys Settings](https://github.com/settings/keys)
+2. Click **"New SSH Key"**
+3. Paste the copied key
+4. Add title (e.g., `ArchLinux-PC`)
+5. Save
 
-## 6. Add SSH Key to GitHub
-
-1. Go to [GitHub SSH Keys Settings](https://github.com/settings/keys).
-2. Click **"New SSH Key"**.
-3. Paste the copied key.
-4. Add a descriptive title (e.g., `ArchLinux-PC`).
-5. Save.
-
----
-
-## 7. Test Your SSH Connection
-
-Run:
-
+### 7. Test SSH Connection
 ```bash
 ssh -T git@github.com
 ```
 
-If successful, you'll see:
-
+Expected output:
 ```
 Hi hypergolang! You've successfully authenticated, but GitHub does not provide shell access.
 ```
 
----
-
-## 8. Auto-Load SSH Key on Startup
-
-Create or edit the SSH config file:
-
+### 8. Auto-Load SSH Key on Startup
+Create SSH config:
 ```bash
-nano ~/.ssh/config
+vim ~/.ssh/config
 ```
 
 Add:
-
 ```
 Host github.com
   AddKeysToAgent yes
   IdentityFile ~/.ssh/id_ed25519
 ```
 
-Save and exit.
+---
+
+## Method 2: GitHub CLI Setup (Recommended for VS Code)
+
+### 1. Install GitHub CLI
+```bash
+sudo pacman -S github-cli
+```
+
+### 2. Install Git (if not already installed)
+```bash
+sudo pacman -S git
+```
+
+### 3. Configure Git
+```bash
+git config --global user.name "hypergolang"
+git config --global user.email "hypergolang@gmail.com"
+```
+
+### 4. Login to GitHub CLI
+```bash
+gh auth login
+```
+
+**Choose these options:**
+* **Where do you use GitHub?** → `GitHub.com`
+* **Preferred protocol?** → `HTTPS`
+* **Authenticate Git with GitHub credentials?** → `Yes`
+* **How to authenticate?** → `Login with a web browser`
+
+Follow the browser authentication process.
+
+### 5. Verify Authentication
+```bash
+gh auth status
+```
+
+You should see:
+```
+✓ Logged in to github.com as hypergolang
+```
+
+### 6. Test Git Operations
+```bash
+git config --global credential.helper ""
+git config --global credential.helper manager
+```
 
 ---
 
-## 9. Verify Everything Works
+## Which Method to Choose?
 
-Clone a repo using SSH to test:
+### Use **SSH Keys** if:
+- You prefer traditional Git workflow
+- You work primarily in terminal
+- You want to avoid browser authentication
 
+### Use **GitHub CLI** if:
+- You use VS Code with GitHub extensions
+- You want seamless integration with GitHub features (PRs, Issues)
+- You prefer HTTPS over SSH
+- You want to avoid VS Code authentication popups
+
+---
+
+## Testing Your Setup
+
+### For SSH Method:
 ```bash
-git clone git@github.com:your-username/your-repo.git
+git clone git@github.com:username/your-repo.git
 ```
+
+### For GitHub CLI Method:
+```bash
+git clone https://github.com/username/your-repo.git
+```
+
+---
+
+## VS Code Integration
+
+If using **GitHub CLI method**, VS Code will automatically use your authenticated GitHub CLI session without additional popups.
+
+If using **SSH method**, you may need to configure VS Code's Git settings to use SSH.
+
+---
+
+## Troubleshooting
+
+### SSH Issues:
+- Make sure SSH agent is running: `ssh-add -l`
+- Test connection: `ssh -T git@github.com`
+
+### GitHub CLI Issues:
+- Check auth status: `gh auth status`
+- Re-login if needed: `gh auth login`
+
+### Git Push Issues:
+- For SSH: Use `git@github.com:username/repo.git` format
+- For HTTPS: Use `https://github.com/username/repo.git` format
 
 ---
 
 ## Done!
 
-You now have:
-
-* Git configured with `hypergolang`.
-* SSH keys generated and linked to GitHub.
-* Auto SSH-agent setup.
-
----
-
-```
-
----
-
-### **Would you like me to create this `README.md` as a ready-to-download file and send it to you?**
-```
+You now have Git configured with GitHub authentication using your preferred method. Both methods will work seamlessly with your development workflow.
